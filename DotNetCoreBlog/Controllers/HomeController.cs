@@ -49,18 +49,13 @@ namespace DotNetCoreBlog.Controllers
         [HttpPost]
         public async Task<IActionResult> Write(WritePostModel model)
         {
-            // purpose-built backdoor to demonstrate error handling
-            if (model.Title == "Break me")
-            {
-                throw new InvalidOperationException("OK then!");
-            }
-
             if (ModelState.IsValid)
             {
                 var post = await _service.WritePostAsync(model.UrlSlug, model.Title, model.Summary, model.Body, model.Tags);
                 return RedirectToAction(nameof(Blog), new { Id = post.UrlSlug });
             }
 
+            Response.StatusCode = 400;
             return View(model);
         }
 

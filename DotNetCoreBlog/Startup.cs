@@ -19,23 +19,18 @@ namespace DotNetCoreBlog
         
         public void ConfigureServices(IServiceCollection services)
         {
+            // set up entity framework
+            ConfigureDb(services);
+
+            // set up application services
             services.Configure<AppSettings>(Configuration.GetSection(nameof(AppSettings)));
-
-            var sqlConnection = Configuration.GetConnectionString("Blog");
-            services.AddDbContextPool<BlogContext>(options =>
-            {
-                options.UseSqlServer(sqlConnection, sqlOptions =>
-                {
-                    sqlOptions.EnableRetryOnFailure();
-                });
-            });
-
             services.AddTransient<BlogService>();
 
+            // set up framework services
             services.AddMvc();
         }
 
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public virtual void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
             // plug in custom middleware - it's important that we do this first to get accurate results
             app.UseMiddleware<Middleware.ProcessingTimeMiddleware>();
@@ -58,6 +53,18 @@ namespace DotNetCoreBlog
                 routes.MapRoute(
                     name: "default",
                     template: "{controller=Home}/{action=Index}/{id?}");
+            });
+        }
+
+        protected virtual void ConfigureDb(IServiceCollection services)
+        {
+            services.AddDbContext<BlogContext>(options =>
+            {
+                var sqlConnection = Configuration.GetConnectionString("Blog");
+                options.UseSqlServer(sqlConnection, sqlOptions =>
+                {
+                    sqlOptions.EnableRetryOnFailure();
+                });
             });
         }
     }
