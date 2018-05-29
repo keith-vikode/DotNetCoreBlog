@@ -14,8 +14,10 @@ body > header hr {
     display: none;
 }
 
-body > header > b {
+body > header > a {
     color: saddlebrown;
+    font-weight: bold;
+    text-decoration: none !important;
 }
 
 body > header > nav {
