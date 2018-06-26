@@ -2,6 +2,7 @@
 @inject IOptions<AppSettings> Settings
 @{ 
     var sw = Context.Items["ProcessingTime"] as System.Diagnostics.Stopwatch;
+    var timeClass = sw.Elapsed > Settings.Value.MinPageLoadTime ? "danger" : "success";
 }
 <!DOCTYPE html>
 <html>
@@ -30,7 +31,9 @@
         <hr />
         <small>
             &copy; @Settings.Value.BlogTitle @DateTime.UtcNow.Year
-            <br />
+        </small>
+        <br />
+        <small class="@timeClass">
             processed in @sw.Elapsed.TotalMilliseconds.ToString("#,#") ms
         </small>
     </footer>

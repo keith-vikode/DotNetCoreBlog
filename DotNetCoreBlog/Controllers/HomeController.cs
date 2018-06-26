@@ -8,11 +8,13 @@ namespace DotNetCoreBlog.Controllers
 {
     public class HomeController : Controller
     {
-        private BlogService _service;
+        private readonly BlogService _service;
+        private readonly AppSettings _settings;
 
-        public HomeController(BlogService service)
+        public HomeController(BlogService service, IOptions<AppSettings> settings)
         {
             _service = service;
+            _settings = settings.Value;
         }
 
         public async Task<IActionResult> Index([FromServices] IOptions<AppSettings> settings)
@@ -20,7 +22,7 @@ namespace DotNetCoreBlog.Controllers
             // purpose-built back-door to demonstrate the middleware
             if (Request.Query.Count > 0)
             {
-                await Task.Delay(1000);
+                await Task.Delay(_settings.MinPageLoadTime * 2);
             }
 
             return View(await _service.GetRecentPostsAsync(settings.Value.MaxPostsOnHomepage));
