@@ -19,8 +19,16 @@ namespace DotNetCoreBlog
         
         public void ConfigureServices(IServiceCollection services)
         {
-            // set up entity framework
-            ConfigureDb(services);
+            // set up entity framework - note that this will be skipped if EF is already configured,
+            // e.g. within the integration test library
+            services.AddDbContext<BlogContext>(options =>
+            {
+                var sqlConnection = Configuration.GetConnectionString("Blog");
+                options.UseSqlServer(sqlConnection, sqlOptions =>
+                {
+                    sqlOptions.EnableRetryOnFailure();
+                });
+            });
 
             // set up application services
             services.Configure<AppSettings>(Configuration.GetSection(nameof(AppSettings)));
@@ -38,14 +46,15 @@ namespace DotNetCoreBlog
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseBrowserLink();
             }
             else
             {
                 app.UseStatusCodePagesWithReExecute("/Home/Error/{0}");
                 app.UseExceptionHandler("/Home/Error");
+                app.UseHsts();
             }
 
+            app.UseHttpsRedirection();
             app.UseStaticFiles();
 
             app.UseMvc(routes =>
@@ -53,18 +62,6 @@ namespace DotNetCoreBlog
                 routes.MapRoute(
                     name: "default",
                     template: "{controller=Home}/{action=Index}/{id?}");
-            });
-        }
-
-        protected virtual void ConfigureDb(IServiceCollection services)
-        {
-            services.AddDbContext<BlogContext>(options =>
-            {
-                var sqlConnection = Configuration.GetConnectionString("Blog");
-                options.UseSqlServer(sqlConnection, sqlOptions =>
-                {
-                    sqlOptions.EnableRetryOnFailure();
-                });
             });
         }
     }

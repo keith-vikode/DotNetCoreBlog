@@ -1,4 +1,5 @@
 ﻿using DotNetCoreBlog.Models;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Net.Http;
@@ -7,14 +8,21 @@ using Xunit;
 
 namespace DotNetCoreBlog.Tests
 {
-    public class WriteShould : BlogTestFixture
+    public class WriteShould : IClassFixture<CustomWebApplicationFactory<Startup>>
     {
-        private const string TargetUrl = "/Home/Write";
+        private readonly CustomWebApplicationFactory<Startup> _factory;
+
+        public WriteShould(CustomWebApplicationFactory<Startup> factory)
+        {
+            _factory = factory;
+        }
 
         [Fact]
         public async Task Create_Blog_Post_If_Params_Valid()
         {
             // arrange
+            var client = _factory.CreateClient();
+
             var model = new WritePostModel
             {
                 UrlSlug = "test-post",
@@ -25,10 +33,10 @@ namespace DotNetCoreBlog.Tests
             };
             
             // act
-            await Client.PostAsync("/Home/Write", model.ToFormContent());
+            await client.PostAsync("/Home/Write", model.ToFormContent());
 
             // assert
-            using (var context = OpenContext())
+            using (var context = _factory.CreateContext())
             {
                 var newPost = await context.Posts.FirstOrDefaultAsync(post => post.UrlSlug == model.UrlSlug);
                 Assert.NotNull(newPost);
@@ -39,19 +47,20 @@ namespace DotNetCoreBlog.Tests
         public async Task Not_Create_Blog_Post_If_Params_Invalid()
         {
             // arrange
+            var client = _factory.CreateClient();
             var model = new WritePostModel
             {
                 // missing all fields
             };
 
             // act
-            await Client.PostAsync("/Home/Write", model.ToFormContent());
+            await client.PostAsync("/Home/Write", model.ToFormContent());
 
             // assert
-            using (var context = OpenContext())
+            using (var context = _factory.CreateContext())
             {
                 var posts = await context.Posts.ToListAsync();
-                Assert.Equal(0, posts.Count);
+                Assert.Empty(posts);
             }
         }
 
@@ -59,13 +68,14 @@ namespace DotNetCoreBlog.Tests
         public async Task Return_400_If_Params_Invalid()
         {
             // arrange
+            var client = _factory.CreateClient();
             var model = new WritePostModel
             {
                 // missing all params
             };
 
             // act
-            var response = await Client.PostAsync("/Home/Write", model.ToFormContent());
+            var response = await client.PostAsync("/Home/Write", model.ToFormContent());
 
             // assert
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
