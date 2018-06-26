@@ -41,10 +41,7 @@ namespace DotNetCoreBlog.Controllers
         }
 
         [HttpGet]
-        public IActionResult Write()
-        {
-            return View(new WritePostModel());
-        }
+        public IActionResult Write() => View(new WritePostModel());
 
         [HttpPost]
         public async Task<IActionResult> Write(WritePostModel model)
@@ -59,10 +56,6 @@ namespace DotNetCoreBlog.Controllers
             return View(model);
         }
 
-        public IActionResult Error(string id = null)
-        {
-            ViewBag.PageClass = "error";
-            return View(id ?? "500");
-        }
+        public IActionResult Error(string id = null) => View(id ?? "500");
     }
 }
