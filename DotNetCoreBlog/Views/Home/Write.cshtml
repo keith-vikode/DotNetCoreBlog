@@ -8,11 +8,11 @@
     <div asp-validation-summary="All" class="error"></div>
     <p>
         <label asp-for="Title">Title</label>
-        <input asp-for="Title" maxlength="100" required placeholder="Article title" />
+        <input asp-for="Title" maxlength="100" required autofocus placeholder="Article title" />
     </p>
     <p>
         <label asp-for="UrlSlug">URL slug</label>
-        <input asp-for="UrlSlug" maxlength="32" required placeholder="article-title" />
+        <input asp-for="UrlSlug" maxlength="32" required placeholder="article-title" spellcheck="false" />
     </p>
     <p>
         <label asp-for="Summary">Summary</label>

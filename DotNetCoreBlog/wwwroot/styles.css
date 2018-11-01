@@ -47,6 +47,10 @@ textarea[required] {
     background: lemonchiffon;
 }
 
+p, li, blockquote, dt, dd {
+    line-height: 1.35em;
+}
+
 .error {
     color: red !important;
 }
