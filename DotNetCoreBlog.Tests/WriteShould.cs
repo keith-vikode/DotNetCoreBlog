@@ -1,6 +1,8 @@
 ﻿using DotNetCoreBlog.Models;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -8,11 +10,11 @@ using Xunit;
 
 namespace DotNetCoreBlog.Tests
 {
-    public class WriteShould : IClassFixture<CustomWebApplicationFactory<Startup>>
+    public class WriteShould : IClassFixture<WebApplicationFactory<Startup>>
     {
-        private readonly CustomWebApplicationFactory<Startup> _factory;
+        private readonly WebApplicationFactory<Startup> _factory;
 
-        public WriteShould(CustomWebApplicationFactory<Startup> factory)
+        public WriteShould(WebApplicationFactory<Startup> factory)
         {
             _factory = factory;
         }
@@ -21,9 +23,9 @@ namespace DotNetCoreBlog.Tests
         public async Task Create_Blog_Post_If_Params_Valid()
         {
             // arrange
-            var client = _factory.CreateClient();
+            HttpClient client = CreateClient();
 
-            var model = new WritePostModel
+            WritePostModel model = new WritePostModel
             {
                 UrlSlug = "test-post",
                 Title = "Test post",
@@ -31,54 +33,58 @@ namespace DotNetCoreBlog.Tests
                 Body = "Test post body.",
                 Tags = "test,tags"
             };
-            
+
             // act
             await client.PostAsync("/Home/Write", model.ToFormContent());
+            var result = await client.GetAsync($"/Home/Blog/{model.UrlSlug}");
 
             // assert
-            using (var context = _factory.CreateContext())
-            {
-                var newPost = await context.Posts.FirstOrDefaultAsync(post => post.UrlSlug == model.UrlSlug);
-                Assert.NotNull(newPost);
-            }
+            Assert.True(result.IsSuccessStatusCode);
         }
 
         [Fact]
-        public async Task Not_Create_Blog_Post_If_Params_Invalid()
+        public async Task Not_Found_For_Invalid_Blog_Entry()
         {
             // arrange
-            var client = _factory.CreateClient();
-            var model = new WritePostModel
-            {
-                // missing all fields
-            };
+            HttpClient client = CreateClient();
 
             // act
-            await client.PostAsync("/Home/Write", model.ToFormContent());
+            var result = await client.GetAsync("/Home/Blog/not-a-real-post");
 
             // assert
-            using (var context = _factory.CreateContext())
-            {
-                var posts = await context.Posts.ToListAsync();
-                Assert.Empty(posts);
-            }
+            Assert.Equal(HttpStatusCode.NotFound, result.StatusCode);
         }
 
         [Fact]
         public async Task Return_400_If_Params_Invalid()
         {
             // arrange
-            var client = _factory.CreateClient();
-            var model = new WritePostModel
+            HttpClient client = CreateClient();
+            WritePostModel model = new WritePostModel
             {
                 // missing all params
             };
 
             // act
-            var response = await client.PostAsync("/Home/Write", model.ToFormContent());
+            HttpResponseMessage response = await client.PostAsync("/Home/Write", model.ToFormContent());
 
             // assert
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        private HttpClient CreateClient()
+        {
+            return _factory.WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureTestServices(services =>
+                {
+                    services.AddEntityFrameworkInMemoryDatabase();
+                    services.AddDbContext<BlogContext>(options =>
+                    {
+                        options.UseInMemoryDatabase("Blog");
+                    });
+                });
+            }).CreateClient();
         }
     }
 }
