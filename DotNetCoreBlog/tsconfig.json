@@ -1,9 +1,0 @@
-﻿{
-  "compileOnSave": true,
-  "compilerOptions": {
-    "rootDir": "ClientScripts",
-    "outDir": "wwwroot/js",
-    "removeComments": true,
-    "target": "es5"
-  }
-}
