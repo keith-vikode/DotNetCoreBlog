@@ -9,8 +9,8 @@ namespace DotNetCoreBlog.Models
 {
     public class BlogService
     {
-        private ILogger _logger;
-        private BlogContext _context;
+        private readonly ILogger _logger;
+        private readonly BlogContext _context;
 
         public BlogService(BlogContext context, ILoggerFactory loggerFactory)
         {
